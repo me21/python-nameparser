@@ -512,6 +512,8 @@ class HumanName(object):
         and :py:func:`handle_capitalization`.
         """
         self.handle_firstnames()
+        if self.C.try_russian_name_specifics:
+            self.handle_russian_name_specifics()
         self.handle_capitalization()
 
     def fix_phd(self):
@@ -567,6 +569,76 @@ class HumanName(object):
                 and len(self) == 2 \
                 and not lc(self.title) in self.C.first_name_titles:
             self.last, self.first = self.first, self.last
+
+    def is_turkic_patronymic(self, piece):
+        return self.C.regexes.turkic_patronymic_suffixes.match(piece) or self.C.regexes.turkic_patronymic_suffixes_cyrillic.match(piece)
+
+    def handle_russian_name_specifics(self):
+        # Russian name order may have a last name first,
+        # so the order will be Last First Middle instead of First Middle Last (but without comma!)
+        # We can deduce this by checking EITHER if the first name looks like a russian last name,
+        # (but it currently breaks on names like Martin or Franklin or Benjamin - hence extra config parameter)
+        # OR if the last name looks like a russian patronymic
+        # (but it will break on name without patronymic and foreign last name like Olurombi Alexey <- Last First order),
+        # Another case: Last First instead of First Last. Then middle is empty.
+        is_name_order_lfm = self.is_russian_last_name(self.first) or (
+            # if the middle name also looks like a russian patronymic, then it's a First Middle Last order,
+            # e.g. Roman Alexeevich Abramovich <- Abramovich does look like patronymic, but it's really a last name
+            self.is_russian_patronymic(self.last) and not self.is_russian_patronymic(self.middle)
+        ) or (  # some Russian citizens have patronymics of turkic origin, e.g. Said Ogly
+            self.is_turkic_patronymic(self.last)
+        )
+
+        # rare case: last name consists of two or more words separated by space
+        # one of them got incorrectly parsed as first/middle name,
+        # Russian middle names are patronymics, and consist of one word only
+        if len(self.middle_list) > 1:
+            # exception to this rule: turkic origin patronymics (e.g. Said Ogly <- two pieces!)
+            if is_name_order_lfm:
+                if self.is_turkic_patronymic(self.last):
+                    # e.g "Ahmedov Oktay Said Ogly" <- Said should be moved to Ogly
+                    self.last_list = self.middle_list[1:] + self.last_list
+                    self.middle_list = [self.middle_list[0]]
+                else:
+                    # then the second word gets parsed as middle name (if the last name goes first in the user input)
+                    # take all elements of middle_list except the last one and append them to first_list
+                    # (it will be rotated to last_list)
+                    self.first_list += self.middle_list[:-1]
+                    # the last element of middle_list is the new middle name (will be rotated to first_list)
+                    self.middle_list = [self.middle_list[-1]]
+            else:
+                if self.is_turkic_patronymic(self.middle_list[-1]):
+                    pass  # no specific treatment needed
+                else:
+                    # if the last name goes last in the user input, then all parts except the last get parsed as middle name
+                    # fix that
+                    self.last_list = self.middle_list[1:] + self.last_list
+                    self.middle_list = [self.middle_list[0]]
+
+        if is_name_order_lfm:
+            # # which is parsed as last name but should be in middle name
+            if self.middle:
+                # rotate the name components
+                self.first, self.middle, self.last = self.middle, self.last, self.first
+            else:
+                self.first, self.last = self.last, self.first
+
+    def is_russian_last_name(self, piece):
+        """
+        If the last name ends in a slavic suffix, it's a last name.
+        """
+        # some first names match these regexes, so we check them first
+        if piece.lower() in ['lev', 'eva', 'yacov', 'yakov', 'veniamin',
+                             'lyubov', 'lubov', 'nina',
+                             'лев', 'ева', 'яков', 'вениамин',
+                             'нина']:
+            return False
+        if self.C.regexes.russian_last_name_endings.match(piece) or self.C.regexes.russian_last_name_endings_cyrillic.match(piece):
+            return True
+        return False
+
+    def is_russian_patronymic(self, piece):
+        return self.C.regexes.russian_patronymic_endings.match(piece) or self.C.regexes.russian_patronymic_endings_cyrillic.match(piece)
 
     def parse_full_name(self):
         """
@@ -764,7 +836,7 @@ class HumanName(object):
                 titles = list(filter(self.is_title,  period_chunks))
                 suffixes = list(filter(self.is_suffix, period_chunks))
 
-                # add the part to the constant so it will be found
+                # add the part to the constant  so it will be found
                 if len(list(titles)):
                     self.C.titles.add(part)
                     continue

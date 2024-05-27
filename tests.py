@@ -2387,6 +2387,87 @@ class InitialsTestCase(HumanNameTestBase):
         self.m(hn.title, "mytitle", hn)
 
 
+class RussianNameOrderTestCase(HumanNameTestBase):
+    C = Constants(try_russian_name_specifics=True)
+
+    def test_russian_name_specific_order(self):
+        hn = HumanName("Zarubkin Alexander Sergeevich", constants=self.C)
+        self.m(hn.first, "Alexander", hn)
+        self.m(hn.middle, "Sergeevich", hn)
+        self.m(hn.last, "Zarubkin", hn)
+
+    def test_specific_order_without_patronymic(self):
+        hn = HumanName("Zarubkin Alexander", constants=self.C)
+        self.m(hn.first, "Alexander", hn)
+        self.m(hn.last, "Zarubkin", hn)
+
+    def test_last_name_with_dash_specific_order(self):
+        hn = HumanName("Blokin-Mechtalin Konstantin Yurievich", constants=self.C)
+        self.m(hn.first, "Konstantin", hn)
+        self.m(hn.middle, "Yurievich", hn)
+        self.m(hn.last, "Blokin-Mechtalin", hn)
+
+    def test_russian_name_with_african_origin(self):
+        hn = HumanName("Alexey Richardovich Olurombi Akinwale", constants=self.C)
+        self.m(hn.first, "Alexey", hn)
+        self.m(hn.middle, "Richardovich", hn)
+        self.m(hn.last, "Olurombi Akinwale", hn)
+
+    def test_russian_name_specific_order_with_african_origin(self):
+        hn = HumanName("Olurombi Akinwale Alexey Richardovich", constants=self.C)
+        self.m(hn.first, "Alexey", hn)
+        self.m(hn.middle, "Richardovich", hn)
+        self.m(hn.last, "Olurombi Akinwale", hn)
+
+    def test_last_name_like_russian_patronymic(self):
+        hn = HumanName("Sergey Vitalyevich Petsevich", constants=self.C)
+        self.m(hn.first, "Sergey", hn)
+        self.m(hn.middle, "Vitalyevich", hn)
+        self.m(hn.last, "Petsevich", hn)
+
+    def test_last_name_like_russian_patronymic_specific_order(self):
+        hn = HumanName("Petsevich Sergey Vitalyevich", constants=self.C)
+        self.m(hn.first, "Sergey", hn)
+        self.m(hn.middle, "Vitalyevich", hn)
+        self.m(hn.last, "Petsevich", hn)
+
+    def test_turkic_patronymic(self):
+        hn = HumanName("Leyla Said Gyzy Ahmedova", constants=self.C)
+        self.m(hn.first, "Leyla", hn)
+        self.m(hn.middle, "Said Gyzy", hn)
+        self.m(hn.last, "Ahmedova", hn)
+
+    def test_turkic_patronymic_specific_order(self):
+        hn = HumanName("Ahmedova Leyla Said Gyzy", constants=self.C)
+        self.m(hn.first, "Leyla", hn)
+        self.m(hn.middle, "Said Gyzy", hn)
+        self.m(hn.last, "Ahmedova", hn)
+
+    # these surnames end with -y (-ый/-ий in Russian) which I would rather not add to the Russian last names endings list
+    # as the resulting regex would be too broad
+    # However, if the first name is followed by patronymic, it will be caught and parsed properly
+    # If it is transliterated as -yi/-yy/-iy/-ii instead of -y, it will also be recognized properly
+    # It's a shame the usual transliteration of -ый/-ий to English is -y (e.g. Sikorsky)
+    # I guess it follows the rules for similar last names in Polish language.
+    # Most popular endings for -y: -ский/-цкий (-sky/-tsky) are already covered, but corner cases like this one remain.
+    @unittest.expectedFailure
+    def test_tricky_case1(self):
+        hn = HumanName("Mogilny Alexander", constants=self.C)  # famous hockey player
+        self.m(hn.first, "Alexander", hn)
+        self.m(hn.last, "Mogilny", hn)
+
+    def test_tricky_case2(self):
+        hn = HumanName("Mogilny Alexander Gennadyevich", constants=self.C)  # famous hockey player
+        self.m(hn.first, "Alexander", hn)
+        self.m(hn.middle, "Gennadyevich", hn)
+        self.m(hn.last, "Mogilny", hn)
+
+    def test_tricky_case3(self):
+        hn = HumanName("Mogilnyy Alexander", constants=self.C)  # famous hockey player
+        self.m(hn.first, "Alexander", hn)
+        self.m(hn.last, "Mogilnyy", hn)
+
+
 TEST_NAMES = (
     "John Doe",
     "John Doe, Jr.",
