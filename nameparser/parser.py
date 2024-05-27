@@ -581,12 +581,12 @@ class HumanName(object):
         # OR if the last name looks like a russian patronymic
         # (but it will break on name without patronymic and foreign last name like Olurombi Alexey <- Last First order),
         # Another case: Last First instead of First Last. Then middle is empty.
-        is_name_order_lfm = self.is_russian_last_name(self.first) or (
+        is_name_order_lfm = (self.first and self.is_russian_last_name(self.first)) or (
             # if the middle name also looks like a russian patronymic, then it's a First Middle Last order,
             # e.g. Roman Alexeevich Abramovich <- Abramovich does look like patronymic, but it's really a last name
-            self.is_russian_patronymic(self.last) and not self.is_russian_patronymic(self.middle)
+            self.last and self.is_russian_patronymic(self.last) and not self.is_russian_patronymic(self.middle)
         ) or (  # some Russian citizens have patronymics of turkic origin, e.g. Said Ogly
-            self.is_turkic_patronymic(self.last)
+            self.last and self.is_turkic_patronymic(self.last)
         )
 
         # rare case: last name consists of two or more words separated by space
