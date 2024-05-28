@@ -33,8 +33,8 @@ REGEXES = set([
     ("phd", re.compile(r'\s(ph\.?\s+d\.?)', re.I | re.U)),
     ("russian_last_name_endings", re.compile(r'^.+(ov|ova|ev|eva|yov|yova|in|yn|ina|sky|skaya|ich|ych|uk|yuk|yk|ko|ak|ukh|ykh|ikh|chuk|yy|yi|oy|oi|iy|ii)$', re.I | re.U)),
     ("russian_last_name_endings_cyrillic", re.compile(r'^.+(ов|ова|ев|ева|ёв|ёва|ин|ын|ина|ский|ская|цкая|цкий|ич|ыч|ук|юк|ык|ко|ак|ух|ых|их|чук|ый|ой|ий)$', re.I | re.U)),
-    ("russian_patronymic_endings", re.compile(r'^(.+(ovich|ovna|evich|evna|ichna))|(ilyich|kuzmich|lukich|fomich)$', re.I | re.U)),
-    ("russian_patronymic_endings_cyrillic", re.compile(r'^(.+(ович|овна|евич|евна|ична))|(ильич|кузьмич|лукич|фомич)$', re.I | re.U)),
+    ("russian_patronymic_endings", re.compile(r'^(.+(ovich|ovna|evich|evna|ichna))|(ilyich|kuzmich|lukich|fomich|fokich)$', re.I | re.U)),
+    ("russian_patronymic_endings_cyrillic", re.compile(r'^(.+(ович|овна|евич|евна|ична))|(ильич|кузьмич|лукич|фомич|фокич)$', re.I | re.U)),
     ("turkic_patronymic_suffixes", re.compile(r'^(oglu|ogly|qizi|kizi|kyzy|gyzy|uly|uulu)$', re.I | re.U)),
     ("turkic_patronymic_suffixes_cyrillic", re.compile(r'^(оглу|оглы|кызы|гызы|улы|уулу)$', re.I | re.U)),
 ])
